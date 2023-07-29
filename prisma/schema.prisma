@@ -1,0 +1,112 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id       Int    @id @default(autoincrement())
+  email    String @unique
+  password String
+}
+
+model Technology {
+  id                            String                          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name                          String                          @unique
+  description                   String
+  skills                        Skill[]                         @ignore
+  EmployeeAreaOfInterestMapping EmployeeAreaOfInterestMapping[] @ignore
+  ProjectTechnologyMapping      ProjectTechnologyMapping[]      @ignore
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  NON_BINARY
+  GENDER_QUEER
+  GENDER_FLUID
+}
+
+enum Designation {
+  SOFTWARE_ENGINEER
+  SR_SOFTWARE_ENGINEER
+  ARCHITECT
+  MANAGER
+  ASSOCIATE_SOFTWARE_ENGINEER
+  DEVELOPMENT_LEAD
+  QA_ENGINEER
+  DEVOPS_ENGINEER
+  QA_LEAD
+  DEVOPS_LEAD
+  SENIOR_MANAGER
+}
+
+model Employee {
+  id                            Int                             @id @default(autoincrement())
+  name                          String
+  email                         String                          @unique
+  gender                        Gender?
+  yearsOfExperience             Int?
+  designation                   Designation?
+  skills                        Skill[]
+  EmployeeAreaOfInterestMapping EmployeeAreaOfInterestMapping[]
+  EmployeeProjectMapping        EmployeeProjectMapping[]
+}
+
+model Skill {
+  employeeId   Int
+  technologyId String     @db.Uuid
+  employee     Employee   @relation(fields: [employeeId], references: [id])
+  technology   Technology @relation(fields: [technologyId], references: [id])
+
+  @@id([employeeId, technologyId])
+}
+
+model EmployeeAreaOfInterestMapping {
+  employeeId   Int
+  technologyId String     @db.Uuid
+  employee     Employee   @relation(fields: [employeeId], references: [id])
+  technology   Technology @relation(fields: [technologyId], references: [id])
+
+  @@id([employeeId, technologyId])
+}
+
+model Project {
+  id                       String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name                     String                     @unique
+  description              String
+  status                   String
+  createdDate              DateTime
+  startDate                DateTime
+  endDate                  DateTime
+  EmployeeProjectMapping   EmployeeProjectMapping[]
+  ProjectTechnologyMapping ProjectTechnologyMapping[]
+}
+
+model ProjectTechnologyMapping {
+  projectId    String     @db.Uuid
+  technologyId String     @db.Uuid
+  project      Project    @relation(fields: [projectId], references: [id])
+  technology   Technology @relation(fields: [technologyId], references: [id])
+
+  @@id([projectId, technologyId])
+}
+
+model EmployeeProjectMapping {
+  projectId        String    @db.Uuid
+  employeeId       Int
+  startDate        DateTime
+  endDate          DateTime?
+  achievement      String
+  responsibilities String
+  project          Project   @relation(fields: [projectId], references: [id])
+  employee         Employee  @relation(fields: [employeeId], references: [id])
+
+  @@id([projectId, employeeId])
+}
